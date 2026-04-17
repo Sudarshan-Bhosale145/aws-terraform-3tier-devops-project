@@ -376,8 +376,8 @@ If you’d like to collaborate, discuss projects, or just say hello — feel fre
 
 ### 🔗 Social & Professional Links
 
-- 💼 [LinkedIn](linkedin.com/in/sudarshan-bhosale-174477374)  
+- 💼 [LinkedIn](https://www.linkedin.com/in/sudarshan-bhosale-174477374)  
 - 🐙 [GitHub](https://github.com/Sudarshan-Bhosale145)  
-- ✉️ [Email](bhosalesudarshan2003@gmail.com)
+- ✉️ [Email](https://bhosalesudarshan2003@gmail.com)
 
 💬 Always open for opportunities in **Cloud, DevOps, and Full-Stack Projects**
