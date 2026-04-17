@@ -1,16 +1,20 @@
 #!/bin/bash
 # ===============================
-# Web EC2 Setup Script
+# Web EC2 Setup Script (FIXED)
 # ===============================
 
-# Install Nginx
+# Update & install required packages
 sudo apt-get update -y
-sudo apt-get install -y nginx
+sudo apt-get install -y nginx php php-mysql
 
-# Terraform-injected private IP of App EC2
-APP_IP="${app_private_ip}"
+# Terraform-injected RDS variables
+DB_ENDPOINT="${db_endpoint}"
+DB_USER="${db_username}"
+DB_PASS="${db_password}"
 
-# Create registration HTML form
+# -------------------------------
+# Create Registration HTML Page
+# -------------------------------
 cat <<EOF > /var/www/html/index.html
 <!DOCTYPE html>
 <html>
@@ -46,7 +50,7 @@ button {
 <div class="container">
 <h2>Registration Form</h2>
 
-<form action="http://$APP_IP/submit.php" method="post">
+<form action="http://10.0.175.192/submit.php" method="post">
 
 <label>Name</label>
 <input type="text" name="name" required><br><br>
@@ -67,20 +71,55 @@ button {
 </html>
 EOF
 
-# Nginx configuration
+# -------------------------------
+# Create submit.php on Web EC2
+# -------------------------------
+cat <<EOF > /var/www/html/submit.php
+<?php
+\$conn = new mysqli("$DB_ENDPOINT", "$DB_USER", "$DB_PASS", "mydb");
+if (\$conn->connect_error) {
+    die("Database connection failed");
+}
+
+\$name  = \$_POST['name'];
+\$email = \$_POST['email'];
+\$phone = \$_POST['phone'];
+
+\$stmt = \$conn->prepare("INSERT INTO registrations (name,email,phone) VALUES (?, ?, ?)");
+\$stmt->bind_param("sss", \$name, \$email, \$phone);
+\$stmt->execute();
+
+echo "<h2>Registration Successful</h2>";
+
+\$stmt->close();
+\$conn->close();
+?>
+EOF
+
+sudo chown -R www-data:www-data /var/www/html
+sudo chmod -R 755 /var/www/html
+
+# -------------------------------
+# Nginx Configuration for PHP
+# -------------------------------
 sudo tee /etc/nginx/sites-available/default > /dev/null <<EOT
 server {
     listen 80;
-
     root /var/www/html;
+    index index.php index.html;
 
     location / {
-        index index.html;
+        try_files \$uri \$uri/ =404;
+    }
+
+    location ~ \.php\$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
     }
 }
 EOT
 
-sudo systemctl enable nginx
 sudo systemctl restart nginx
+sudo systemctl enable nginx
 
-echo "Web EC2 setup complete. Form available at http://<Web_EC2_Public_IP>"
+echo "Web EC2 setup complete. Access at: http://13.62.224.89"

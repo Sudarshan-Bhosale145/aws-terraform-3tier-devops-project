@@ -63,4 +63,36 @@ EOF
 sudo chown www-data:www-data /var/www/html/submit.php
 sudo chmod 644 /var/www/html/submit.php
 
+
 echo "App EC2 setup complete."
+# ===============================
+# GUARANTEED submit.php creation FIX
+# ===============================
+
+sudo mkdir -p /var/www/html
+
+cat <<'EOF' | sudo tee /var/www/html/submit.php > /dev/null
+<?php
+$conn = new mysqli('${db_endpoint}', '${db_username}', '${db_password}', 'mydb');
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$name = $_POST['name'];
+$email = $_POST['email'];
+$phone = $_POST['phone'];
+
+$stmt = $conn->prepare("INSERT INTO registrations (name,email,phone) VALUES (?, ?, ?)");
+$stmt->bind_param("sss", $name, $email, $phone);
+$stmt->execute();
+
+echo "Registration Successful!";
+
+$stmt->close();
+$conn->close();
+?>
+EOF
+
+sudo chown www-data:www-data /var/www/html/submit.php
+sudo chmod 644 /var/www/html/submit.php

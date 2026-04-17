@@ -1,13 +1,5 @@
-# Terraform
 .terraform/
-terraform.tfstate
-terraform.tfstate.backup
 *.tfstate
 *.tfstate.*
-
-# Keys
-*.pem
-*.key
-
-# Packages
-*.zip
+*.tfvars
+.crash.log
